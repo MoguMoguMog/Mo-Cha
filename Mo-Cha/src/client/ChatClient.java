@@ -16,23 +16,25 @@ public class ChatClient extends Thread {
 	// サーバ本体のメソッドを呼び出すために記憶
 	public ChatServer chatServer;
 	private String message;
-	private String name;
+	private int number = 0;
 	
-	public ChatClient(Socket s, ChatServer chatServer) {
+	public ChatClient(Socket s, ChatServer chatServer, int number) {
 		sc = s;
 		this.chatServer = chatServer;
 		pw = null;
 		br = null;
+		this.number = number;
 	}
 	
 	public void send(String message) {
 		pw.println(message);
 	}
 	
+	public void setNumber(int number) {
+		this.number = number;
+	}
 	public void run() {
 		try {
-//			br = new BufferedReader(new InputStreamReader(sc.getInputStream()));
-//			pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(sc.getOutputStream())));
 			pw = new PrintWriter(sc.getOutputStream(),true);
 			br = new BufferedReader(new InputStreamReader(sc.getInputStream()));
 		} catch (Exception e) {
@@ -40,13 +42,13 @@ public class ChatClient extends Thread {
 		}
 
 		while (true) {
-			
 			try {
 				if((message = br.readLine()) != null) {
-					chatServer.sendAll(message);
+					chatServer.sendAll(message,number);
 				}
 			} catch (Exception e) {
 				try {
+					
 					br.close();
 					pw.close();
 					sc.close();

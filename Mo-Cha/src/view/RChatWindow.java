@@ -57,6 +57,7 @@ public class RChatWindow extends Application{
 	protected void init(Stage stage) {
 		root = stage;
 		myNameText.setText(myName+"\n\n");
+		myNameText.setFill(Color.LIGHTSEAGREEN);
 		otherNameText.setText(otherName);
 		
 		BorderPane pane = new BorderPane();

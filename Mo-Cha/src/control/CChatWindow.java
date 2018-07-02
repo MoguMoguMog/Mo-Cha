@@ -12,61 +12,83 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.stage.WindowEvent;
 import view.RChatWindow;
 
-public class CChatWindow extends RChatWindow implements Runnable{
+public class CChatWindow extends RChatWindow implements Runnable {
 	public Socket clientSocket = null;
+	InputStream input = null;
+	BufferedReader reader = null;
+
 	private String HOST = "localhost";
 	private int PORT = 10000;
-	
+	private EventHandler<MouseEvent> mouseClick = null;
+	private EventHandler<WindowEvent> windowClose = null;
 	Thread thread = null;
-	
+
 	public CChatWindow() {
-		
+		// TODO 自動生成されたコンストラクター・スタブ
 	}
-	
+
 	@Override
 	public void initializeCreation() {
-		// イベントリスナ登録
-		EventHandler<MouseEvent> mouseClick = (event)->this.actionExecute(event);
+		// 送信ボタンイベントリスナ登録
+		mouseClick = (event) -> this.actionExecute(event);
 		sendButton.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClick);
-		
-		myNameText.setText(myName+"\n\n");
+		// ウィンドウイベントリスナ登録
+		windowClose = (event) -> this.close();
+		root.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, windowClose);
+
+		myNameText.setText(myName + "\n\n");
+		myNameText.setFill(Color.LIGHTSEAGREEN);
 		otherNameText.setText(otherName);
-		
+
 		initConnectServer();
-		
+
 		thread = new Thread(this);
 		thread.start();
 	}
-	
+
+	private void close() {
+		mouseClick = null;
+		windowClose = null;
+
+		String closeMessage = "close";
+		sendMessage(closeMessage);
+
+		try {
+			clientSocket.close();
+			input.close();
+			reader.close();
+		} catch (IOException e) {
+			System.err.println("正常に終了できませんでした。管理者に報告してください。");
+		}
+
+	}
+
 	/**
 	 * サーバに接続する処理
 	 */
 	private void initConnectServer() {
 		try {
-			clientSocket = new Socket(HOST,PORT);
-//			outputTextField.setText(">サーバに接続しました\n");
+			clientSocket = new Socket(HOST, PORT);
+			input = clientSocket.getInputStream();
+			reader = new BufferedReader(new InputStreamReader(input));
+			
+			sendMessage("");
+			
 		} catch (Exception err) {
-			outputTextField.setText("ERROR"+err + "\n");
+			outputTextField.setText("ERROR" + err + "\n");
 		}
 	}
-	
-	public void paintLoginStatus() {
-		
-		myNameText.setFont(Font.font("Arial", FontWeight.BOLD,16));
-		myNameText.setFill(Color.DARKCYAN);
-	}
-	
+
 	public void actionExecute(Event e) {
 		// 送信ボタン押下
 		if (e.getSource() == sendButton) {
 			executeSendButton();
 		}
 	}
-	
+
 	private void executeSendButton() {
 		String message = inputTextField.getText();
 		sendMessage(message);
@@ -82,32 +104,34 @@ public class CChatWindow extends RChatWindow implements Runnable{
 	@Override
 	public void run() {
 		try {
-			InputStream input = clientSocket.getInputStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-			while(!clientSocket.isClosed()) {
+			while (!clientSocket.isClosed()) {
 				String line = reader.readLine();
-
 				reachedMessage(line);
 			}
+		} catch (Exception err) {
 		}
-		catch(Exception err) { }
 	}
 
 	/**
+	 * 
 	 * 受信したメッセージを表示
 	 */
-	private void reachedMessage(String msgValue) {
-		outputTextField.appendText(msgValue + "\n");
+	public void reachedMessage(String msgValue) {
+		String[] message = new String[2];
+		message = msgValue.split(",");
+		
+		if (message[1].equals("close")) {
+			// 相手が画面を閉じている場合
+			otherNameText.setFill(Color.WHITE);
+		} else if (message[1].equals("connect")) {
+			// 相手がサーバに接続している場合
+			otherNameText.setFill(Color.LIGHTSEAGREEN);
+		}
+		if (!message[0].equals("")) {
+			outputTextField.appendText(message[0] + "\n");
+		}
 	}
 	
-	/**
-	 * ソケット閉じる
-	 */
-	public void close() throws IOException {
-		sendMessage("close");
-		clientSocket.close();
-	}
-
 	/**
 	 * メッセージを送る
 	 */
@@ -115,10 +139,17 @@ public class CChatWindow extends RChatWindow implements Runnable{
 		try {
 			OutputStream output = clientSocket.getOutputStream();
 			PrintWriter writer = new PrintWriter(output);
-
+			
+			if(!(msg.equals("") || msg.equals("close"))) {
+				msg = myName + "\n" + msg;
+				msg = msg.replaceAll("\n", "\n  ");
+			}
+			
 			writer.println(msg);
 			writer.flush();
+		} catch (Exception err) {
+			System.out.println("error");
+			this.close();
 		}
-		catch(Exception err) { outputTextField.appendText("ERROR>" + err + "\n"); }
 	}
 }
