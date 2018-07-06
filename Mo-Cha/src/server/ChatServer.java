@@ -43,7 +43,9 @@ public class ChatServer {
 	}
 
 	public synchronized void sendAll(String message, int number) {
-		if (message.equals("close")) {
+		if (message.equals("close")) { 
+			// 無限ループを止めるための処理
+			userList.get(number).setCanRun(false);
 			userList.remove(number);
 			if(number == 0 && userList.size() == 1) {
 				userList.get(0).setNumber(0);

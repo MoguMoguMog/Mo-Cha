@@ -17,6 +17,7 @@ public class ChatClient extends Thread {
 	public ChatServer chatServer;
 	private String message;
 	private int number = 0;
+	private boolean canRun = true;
 	
 	public ChatClient(Socket s, ChatServer chatServer, int number) {
 		sc = s;
@@ -33,6 +34,11 @@ public class ChatClient extends Thread {
 	public void setNumber(int number) {
 		this.number = number;
 	}
+	
+	public void setCanRun(boolean flag) {
+		this.canRun = flag;
+	}
+	
 	public void run() {
 		try {
 			pw = new PrintWriter(sc.getOutputStream(),true);
@@ -41,7 +47,7 @@ public class ChatClient extends Thread {
 			e.printStackTrace();
 		}
 
-		while (true) {
+		while (canRun) {
 			try {
 				if((message = br.readLine()) != null) {
 					chatServer.sendAll(message,number);
