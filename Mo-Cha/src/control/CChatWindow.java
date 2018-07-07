@@ -1,13 +1,9 @@
+/**
+ * ソケット通信部分と画面制御部でクラス分けたい
+ * */
 package control;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
-
+import client.ClientOfficer;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
@@ -15,23 +11,26 @@ import javafx.scene.paint.Color;
 import javafx.stage.WindowEvent;
 import view.RChatWindow;
 
-public class CChatWindow extends RChatWindow implements Runnable {
-	public Socket clientSocket = null;
-	InputStream input = null;
-	BufferedReader reader = null;
+public class CChatWindow extends RChatWindow {
+	// サーバとのやり取りを行うためのクラス
+	ClientOfficer clientOfficer = null;
 
-	private String HOST = "localhost";
-	private int PORT = 10000;
+	// イベントハンドラ
 	private EventHandler<MouseEvent> mouseClick = null;
 	private EventHandler<WindowEvent> windowClose = null;
-	Thread thread = null;
 
+	/**
+	 * コンストラクタ
+	 */
 	public CChatWindow() {
-		// TODO 自動生成されたコンストラクター・スタブ
 	}
 
-	@Override
+	/**
+	 * 画面初期化処理
+	 */
 	public void initializeCreation() {
+		// サーバとのやり取り用のクラス
+		clientOfficer = new ClientOfficer(myName, this);
 		// 送信ボタンイベントリスナ登録
 		mouseClick = (event) -> this.actionExecute(event);
 		sendButton.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClick);
@@ -43,43 +42,20 @@ public class CChatWindow extends RChatWindow implements Runnable {
 		myNameText.setFill(Color.LIGHTSEAGREEN);
 		otherNameText.setText(otherName);
 
-		initConnectServer();
-
-		thread = new Thread(this);
-		thread.start();
+		clientOfficer.initConnectServer();
 	}
 
+	/**
+	 * 画面クローズ時の処理
+	 */
 	private void close() {
 		mouseClick = null;
 		windowClose = null;
 
 		String closeMessage = "close";
-		sendMessage(closeMessage);
+		clientOfficer.sendMessage(closeMessage);
 
-		try {
-			clientSocket.close();
-			input.close();
-			reader.close();
-		} catch (IOException e) {
-			System.err.println("正常に終了できませんでした。管理者に報告してください。");
-		}
-
-	}
-
-	/**
-	 * サーバに接続する処理
-	 */
-	private void initConnectServer() {
-		try {
-			clientSocket = new Socket(HOST, PORT);
-			input = clientSocket.getInputStream();
-			reader = new BufferedReader(new InputStreamReader(input));
-			
-			sendMessage("");
-			
-		} catch (Exception err) {
-			outputTextField.setText("ERROR" + err + "\n");
-		}
+		clientOfficer.close();
 	}
 
 	public void actionExecute(Event e) {
@@ -91,35 +67,18 @@ public class CChatWindow extends RChatWindow implements Runnable {
 
 	private void executeSendButton() {
 		String message = inputTextField.getText();
-		sendMessage(message);
+		clientOfficer.sendMessage(message);
 		inputTextField.clear();
 	}
 
-	public static void main(String[] args) {
-		myName = args[0];
-		otherName = args[1];
-		launch(args);
-	}
-
-	@Override
-	public void run() {
-		try {
-			while (!clientSocket.isClosed()) {
-				String line = reader.readLine();
-				reachedMessage(line);
-			}
-		} catch (Exception err) {
-		}
-	}
-
 	/**
-	 * 
 	 * 受信したメッセージを表示
+	 * @param msgValue 受信したメッセージ
 	 */
 	public void reachedMessage(String msgValue) {
 		String[] message = new String[2];
 		message = msgValue.split(",");
-		
+
 		if (message[1].equals("close")) {
 			// 相手が画面を閉じている場合
 			otherNameText.setFill(Color.WHITE);
@@ -127,29 +86,12 @@ public class CChatWindow extends RChatWindow implements Runnable {
 			// 相手がサーバに接続している場合
 			otherNameText.setFill(Color.LIGHTSEAGREEN);
 		}
-		if (!message[0].equals("")) {
-			outputTextField.appendText(message[0] + "\n");
-		}
+		outputTextField.setText(msgValue);
 	}
-	
-	/**
-	 * メッセージを送る
-	 */
-	public void sendMessage(String msg) {
-		try {
-			OutputStream output = clientSocket.getOutputStream();
-			PrintWriter writer = new PrintWriter(output);
-			
-			if(!(msg.equals("") || msg.equals("close"))) {
-				msg = myName + "\n" + msg;
-				msg = msg.replaceAll("\n", "\n  ");
-			}
-			
-			writer.println(msg);
-			writer.flush();
-		} catch (Exception err) {
-			System.out.println("error");
-			this.close();
-		}
+
+	public static void main(String[] args) {
+		myName = args[0];
+		otherName = args[1];
+		launch(args);
 	}
 }

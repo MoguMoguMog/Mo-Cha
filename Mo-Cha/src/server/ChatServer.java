@@ -28,7 +28,9 @@ public class ChatServer {
 				socket = serverSocket.accept();
 				if (userList.size() < 2) {
 					userList.add(new ChatClient(socket, this, userList.size()));
-					new Thread(userList.get(userList.size()-1)).start();;
+					new Thread(userList.get(userList.size()-1)).start();
+					System.out.println(userList.size());
+
 				} else if (userList.size() == 2) {
 					System.out.println("Full");
 				}

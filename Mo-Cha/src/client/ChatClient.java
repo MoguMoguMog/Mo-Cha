@@ -1,6 +1,7 @@
 package client;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -11,8 +12,8 @@ public class ChatClient extends Thread {
 	// 通信のためのソケット
 	private Socket sc;
 	// そのソケットから作成した入出力用のストリーム
-	private BufferedReader br;
-	private PrintWriter pw;
+	private BufferedReader br = null;;
+	private PrintWriter pw = null;;
 	// サーバ本体のメソッドを呼び出すために記憶
 	public ChatServer chatServer;
 	private String message;
@@ -22,9 +23,19 @@ public class ChatClient extends Thread {
 	public ChatClient(Socket s, ChatServer chatServer, int number) {
 		sc = s;
 		this.chatServer = chatServer;
-		pw = null;
-		br = null;
 		this.number = number;
+		try {
+			pw = new PrintWriter(sc.getOutputStream(),true);
+		} catch (IOException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+		try {
+			br = new BufferedReader(new InputStreamReader(sc.getInputStream()));
+		} catch (IOException e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
 	}
 	
 	public void send(String message) {
@@ -40,13 +51,6 @@ public class ChatClient extends Thread {
 	}
 	
 	public void run() {
-		try {
-			pw = new PrintWriter(sc.getOutputStream(),true);
-			br = new BufferedReader(new InputStreamReader(sc.getInputStream()));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 		while (canRun) {
 			try {
 				if((message = br.readLine()) != null) {
