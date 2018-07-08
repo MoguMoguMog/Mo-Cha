@@ -35,12 +35,7 @@ public class ClientOfficer implements Runnable {
 	public ClientOfficer(String myName, CChatWindow chatWindow) {
 		this.myName = myName;
 		this.chatWindow = chatWindow;
-	}
-
-	public void initConnectServer() {
-		thread = new Thread(this);
-		thread.start();
-
+		
 		try {
 			// サーバに接続
 			clientSocket = new Socket(HOST, PORT);
@@ -58,15 +53,18 @@ public class ClientOfficer implements Runnable {
 			// それ以外
 			e.printStackTrace();
 		}
+		
+		thread = new Thread(this);
+		thread.start();
 	}
-
+	
 	/**
 	 * メッセージをサーバに送信する
 	 * @param message 送信したいメッセージ
 	 */
 	public void sendMessage(String message) {
-		// ""は接続時、"close"はクローズ時
-		if (!(message.equals("close"))) {
+		// "close"はクローズ時
+		if (!(message.equals("") || message.equals("close"))) {
 			message = myName + "\n" + message;
 			message = message.replaceAll("\n", "\n  ");
 		}

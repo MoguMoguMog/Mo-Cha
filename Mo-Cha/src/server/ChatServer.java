@@ -5,13 +5,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import client.ChatClient;
+import client.ServerOfficer;
 
 public class ChatServer {
 	//PORT Number
 	public static final int PORT = 10000; //待ち受けポート番号
 	// クライアント
-	public ArrayList<ChatClient> userList = null;
+	public ArrayList<ServerOfficer> userList = null;
 	
 	int number = 0;
 
@@ -19,7 +19,7 @@ public class ChatServer {
 	 * コンストラクタ
 	 */
 	public ChatServer() {
-		userList = new ArrayList<ChatClient>();
+		userList = new ArrayList<ServerOfficer>();
 		Socket socket;
 
 		try {
@@ -27,7 +27,7 @@ public class ChatServer {
 			while (true) {
 				socket = serverSocket.accept();
 				if (userList.size() < 2) {
-					userList.add(new ChatClient(socket, this, userList.size()));
+					userList.add(new ServerOfficer(socket, this, userList.size()));
 					new Thread(userList.get(userList.size()-1)).start();
 					System.out.println(userList.size());
 
@@ -54,7 +54,7 @@ public class ChatServer {
 			}
 			message = "";
 		}
-		for (ChatClient client : userList) {
+		for (ServerOfficer client : userList) {
 			if (userList.size() == 1) {
 				// 接続数が1の場合
 				client.send(message + "," + "close");

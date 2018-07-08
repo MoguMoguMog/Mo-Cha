@@ -31,6 +31,9 @@ public class CChatWindow extends RChatWindow {
 	public void initializeCreation() {
 		// サーバとのやり取り用のクラス
 		clientOfficer = new ClientOfficer(myName, this);
+		// 接続したことをサーバに通知するための処理
+		clientOfficer.sendMessage("");
+		
 		// 送信ボタンイベントリスナ登録
 		mouseClick = (event) -> this.actionExecute(event);
 		sendButton.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseClick);
@@ -41,8 +44,6 @@ public class CChatWindow extends RChatWindow {
 		myNameText.setText(myName + "\n\n");
 		myNameText.setFill(Color.LIGHTSEAGREEN);
 		otherNameText.setText(otherName);
-
-		clientOfficer.initConnectServer();
 	}
 
 	/**
@@ -86,7 +87,7 @@ public class CChatWindow extends RChatWindow {
 			// 相手がサーバに接続している場合
 			otherNameText.setFill(Color.LIGHTSEAGREEN);
 		}
-		outputTextField.setText(msgValue);
+		outputTextField.appendText(message[0] + "\n");
 	}
 
 	public static void main(String[] args) {
